@@ -1,6 +1,6 @@
 import { Engine, Bodies, Render, Composite, Runner, Constraint, MouseConstraint, Mouse, Body, Vector } from 'matter-js';
 
-import chrisMusicPng from '../public/chris-music.png'
+import chrisMusicPng from '/chris-music.png'
 import viteLogo from '/vite.svg'
 
 // create an engine
