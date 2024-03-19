@@ -1,4 +1,7 @@
-import { Engine, Bodies, Render, Composite, Runner, Constraint } from 'matter-js';
+import { Engine, Bodies, Render, Composite, Runner, Constraint, MouseConstraint, Mouse, Body, Vector } from 'matter-js';
+
+import chrisMusicPng from '../public/chris-music.png'
+import viteLogo from '/vite.svg'
 
 // create an engine
 const engine = Engine.create();
@@ -7,14 +10,29 @@ const engine = Engine.create();
 // create a renderer
 const render = Render.create({
     element: document.body,
-    engine: engine
+    engine: engine,        
+    options: {
+      wireframes: false
+  }
 });
 
 // create two boxes and a ground
-// const boxA = Bodies.rectangle(400, 200, 80, 80);
+const boxA = Bodies.rectangle(400, 200, 80, 80,
+  {
+    render:{
+      sprite:{
+        texture:chrisMusicPng,
+        xScale:80/512,
+        yScale:80/512
+      }
+    }
+  } 
+);
 // const boxB = Bodies.rectangle(450, 50, 80, 80);
 const otherBody = Bodies.circle(400,300,50, {isStatic:true})
 const ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+
+console.log("boxA: ",boxA);
 
 
 const chainLinks = []
@@ -34,20 +52,23 @@ chainConstraints.push(Constraint.create({
   
 }
 
+// pin the first chain link in place
 chainLinks[0].isStatic = true
 
+const matterMouse = Mouse.create(document.body)
 
-// const boxSpring = Constraint.create({
-//   bodyA:boxA,
-//   bodyB:boxB,
-//   stiffness: 0.1,
-//   render:{
-//     visible: false
-//   }
-// })
+const mouseConstraint = MouseConstraint.create(engine,{
+  mouse: matterMouse
+})
+
+setTimeout(() => {
+  Body.setVelocity(boxA, Vector.create(0,-7))
+  console.log('FIRE');
+},6000)
+
 
 // add all of the bodies to the world
-Composite.add(engine.world, [ ground, ...chainLinks, ...chainConstraints, otherBody]);
+Composite.add(engine.world, [ ground, ...chainLinks, ...chainConstraints, otherBody, mouseConstraint, boxA]);
 
 // run the renderer
 Render.run(render);
