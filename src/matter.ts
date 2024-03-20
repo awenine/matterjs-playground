@@ -10,7 +10,7 @@ const soundNumbers = [4,6,9,12,15]
 
 const sounds = soundNumbers.map(number => {
   let sound = new Audio();
-  sound.src = `../public/sounds/sound_${number}.WAV`
+  sound.src = `/sounds/sound_${number}.WAV`
   return sound
 })
 
