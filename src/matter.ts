@@ -1,6 +1,17 @@
-import { Engine, Bodies, Render, Composite, Runner, Constraint, MouseConstraint, Mouse, Body, Vector, Events, Sleeping } from 'matter-js';
+import { Engine, Bodies, Render, Composite, Runner, Constraint, MouseConstraint, Mouse, Body, Vector, Events, Sleeping, Svg, Common } from 'matter-js';
+
+import {decomp} from 'poly-decomp-es'
+
+
+
+import typescriptLogo from './typescript.svg'
+import testShape from '../public/testShape.svg'
+
 
 import chrisMusicPng from '/chris-music.png'
+
+// Common.setDecomp(decomp)
+
 
 // create a basic sound player settup
 
@@ -14,7 +25,15 @@ const sounds = soundNumbers.map(number => {
   return sound
 })
 
+// create dom element for logging
 
+const textBox = document.getElementById('textBox')
+
+document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
+
+<img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
+
+`
 
 
 // create an engine
@@ -160,15 +179,18 @@ function forceMoveAndRotate(body:Body, endX:number, endY:number, pct:number) {
       y: y
   });
 
+  // Body.setVelocity(body)
+
   Body.setAngle(body, r)
 }
 
-let pct = 0;
+let movePercent = 0;
 const targetX = 400
 const targetY = 300
 
 let move = false
 let movableBody = boxA
+let moveVector = Vector.create(0,0)
 
 Events.on(mouseConstraint, 'enddrag', function(event) {
   console.log('enddrag', event.body);
@@ -176,20 +198,23 @@ Events.on(mouseConstraint, 'enddrag', function(event) {
   // Body.setVelocity(event.body, Vector.create(0,-7))
   // event.body.circleRadius = 20
   // if (event.body.id = 1) {
-    console.log('boxA dragged');
-    if (!event.body.isStatic){
+  console.log('boxA dragged');
+
+  if (!event.body.isStatic) {
     Sleeping.set(movableBody, false)
-    pct = 0
+    movePercent = 0
     movableBody = event.body
-    move = true}
+    move = true
+    if (textBox) textBox.innerHTML = `body id: ${event.body.id}`
+  }
 });
 
 
 Events.on(engine, "beforeUpdate", function (_event) {
     if (move){ 
-      if(pct < 101) {
-        pct = pct + 1;
-        forceMoveAndRotate(movableBody, targetX, targetY, pct);
+      if(movePercent < 101) {
+        movePercent = movePercent + 1;
+        forceMoveAndRotate(movableBody, targetX, targetY, movePercent);
       } else {
         // set angle to upright
         movableBody.angle = 0
@@ -202,8 +227,61 @@ Events.on(engine, "beforeUpdate", function (_event) {
 
 
 
+// Svg Code
+
+let tsSvg;
+
+var select = function(root, selector) {
+  // turns the resulting nodelist into an Array
+  return Array.prototype.slice.call(root.querySelectorAll(selector));
+};
+
+var loadSvg = function(url) {
+  return fetch(url)
+      .then(function(response) { return response.text(); })
+      .then(function(raw) { return (new window.DOMParser()).parseFromString(raw, 'image/svg+xml'); });
+};
+
+loadSvg(testShape).then(function(root) {
+
+  console.log("root: ",root);
+  var color = Common.choose(['#f19648', '#f5d259', '#f55a3c', '#063e7b', '#ececd1']);
+
+  console.log(Array.prototype.slice.call(root.querySelectorAll('path')));
+  
+  var vertexSets = select(root, 'path')
+      .map(function(path) { return Svg.pathToVertices(path, 30); });
+
+  tsSvg = Bodies.fromVertices(400, 80, vertexSets, {
+    render: {
+        fillStyle: color,
+        strokeStyle: color,
+        lineWidth: 1
+    }
+}, true)
+
+console.log("tsSvg: ",tsSvg);
+
+Composite.add(engine.world,tsSvg)
+
+  // Composite.add(engine.world, Bodies.fromVertices(400, 80, vertexSets, {
+  //     render: {
+  //         fillStyle: color,
+  //         strokeStyle: color,
+  //         lineWidth: 1
+  //     }
+  // }, true));
+});
+
+
+
+
 // add all of the bodies to the world
-Composite.add(engine.world, [ ground, rightWall, leftWall, ...chainLinks, ...chainConstraints, mouseConstraint, boxA, ...litterBoxes ]);
+Composite.add(engine.world, [ ground, rightWall, leftWall, 
+  // ...chainLinks, ...chainConstraints, 
+  mouseConstraint, 
+  // boxA, ...litterBoxes 
+]);
 
 // run the renderer
 Render.run(render);
